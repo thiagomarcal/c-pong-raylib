@@ -1,4 +1,5 @@
 #import "camera.h"
+#include <stdio.h>
 #import "raymath.h"
 
 GameCamera CreateGameCamera() {
@@ -32,7 +33,7 @@ void InitGameCamera(GameCamera *camera) {
 
 }
 
-void UpdateGameCamera(GameCamera *camera, Vector3 playerPosition) {
+void UpdateGameCamera(GameCamera *camera, bool explorationMode, Vector3 playerPosition) {
     Vector2 mousePositionDelta = GetMouseDelta();
 
     Vector3 direction = Vector3Subtract(
@@ -47,41 +48,66 @@ void UpdateGameCamera(GameCamera *camera, Vector3 playerPosition) {
     // Calculate the rotation angles to align the player model with the camera
     camera->currentRotationAngle = atan2(camera->directionToTarget.x, camera->directionToTarget.z) * RAD2DEG;
 
-//    if (game->GetInspector()->IsExplorationModeActive()) {
-//        UpdateExplorationModeCamera(camera, mousePositionDelta);
-//    } else {
-//        UpdatePlayerModeCamera(camera, game->GetPlayer()->GetPosition(), mousePositionDelta);
-//    }
-
-    UpdatePlayerModeCamera(camera, playerPosition, mousePositionDelta);
+   if (explorationMode) {
+       UpdateExplorationModeCamera(camera, mousePositionDelta);
+   } else {
+       UpdatePlayerModeCamera(camera, playerPosition, mousePositionDelta);
+   }
 
 }
 
-void UpdatePlayerModeCamera(GameCamera *camera, Vector3 playerPosition, Vector2 mousePositionDelta) {
-    camera->camera.target = playerPosition;
+void UpdatePlayerModeCamera(GameCamera *gameCamera, Vector3 playerPosition, Vector2 mousePositionDelta) {
+    gameCamera->camera.target = playerPosition;
 
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
-        camera->yaw += mousePositionDelta.x * camera->sensitivity;
-        camera->pitch -= mousePositionDelta.y * camera->sensitivity;
+        gameCamera->yaw += mousePositionDelta.x * gameCamera->sensitivity;
+        gameCamera->pitch -= mousePositionDelta.y * gameCamera->sensitivity;
 
-        if (camera->pitch > camera->maxPitch) camera->pitch = camera->maxPitch;
-        if (camera->pitch < -camera->maxPitch) camera->pitch = -camera->maxPitch;
+        if (gameCamera->pitch > gameCamera->maxPitch) gameCamera->pitch = gameCamera->maxPitch;
+        if (gameCamera->pitch < -gameCamera->maxPitch) gameCamera->pitch = -gameCamera->maxPitch;
     }
 
-    camera->distance -= GetMouseWheelMove() * camera->zoomSpeed;
-    if (camera->distance < 1.0f) camera->distance = 1.0f;
-    if (camera->distance > 15.0f) camera->distance = 15.0f;
+    gameCamera->distance -= GetMouseWheelMove() * gameCamera->zoomSpeed;
+    if (gameCamera->distance < 1.0f) gameCamera->distance = 1.0f;
+    if (gameCamera->distance > 15.0f) gameCamera->distance = 15.0f;
 
 
     Vector3 front;
-    front.x = cosf(camera->yaw * DEG2RAD) * cosf(camera->pitch * DEG2RAD);
-    front.y = sinf(camera->pitch * DEG2RAD);
-    front.z = sinf(camera->yaw * DEG2RAD) * cosf(camera->pitch * DEG2RAD);
+    front.x = cosf(gameCamera->yaw * DEG2RAD) * cosf(gameCamera->pitch * DEG2RAD);
+    front.y = sinf(gameCamera->pitch * DEG2RAD);
+    front.z = sinf(gameCamera->yaw * DEG2RAD) * cosf(gameCamera->pitch * DEG2RAD);
 
-    camera->camera.position.x = playerPosition.x - front.x * camera->distance;
-    camera->camera.position.y = playerPosition.y - front.y * camera->distance;
-    camera->camera.position.z = playerPosition.z - front.z * camera->distance;
+    gameCamera->camera.position.x = playerPosition.x - front.x * gameCamera->distance;
+    gameCamera->camera.position.y = playerPosition.y - front.y * gameCamera->distance;
+    gameCamera->camera.position.z = playerPosition.z - front.z * gameCamera->distance;
 
 }
 
+void UpdateExplorationModeCamera(GameCamera *gameCamera, Vector2 mousePositionDelta) {
 
+    printf("Exploration Mode\n");
+
+    // ASWD free camera move
+    if (IsKeyDown(KEY_W)) CameraMoveForward(&gameCamera->camera, gameCamera->speed, true);
+    if (IsKeyDown(KEY_A)) CameraMoveRight(&gameCamera->camera, -gameCamera->speed, true);
+    if (IsKeyDown(KEY_S)) CameraMoveForward(&gameCamera->camera, -gameCamera->speed, true);
+    if (IsKeyDown(KEY_D)) CameraMoveRight(&gameCamera->camera, gameCamera->speed, true);
+
+
+    // Camera free rotation with Q and E
+    if (IsKeyDown(KEY_Q)) CameraYaw(&gameCamera->camera, gameCamera->speed, true);
+    if (IsKeyDown(KEY_E)) CameraYaw(&gameCamera->camera, -gameCamera->speed, true);
+
+    // Camera rotation with mouse drag
+    if (!IsKeyDown(KEY_LEFT_SHIFT)) {
+        if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            CameraYaw(&gameCamera->camera, -mousePositionDelta.x * gameCamera->dragSpeed, true);
+            CameraPitch(&gameCamera->camera, -mousePositionDelta.y * gameCamera->dragSpeed, true, true, false);
+        }
+    }
+
+    // Camera Zoom
+    if (GetMouseWheelMove() != 0) {
+        CameraMoveToTarget(&gameCamera->camera, (-GetMouseWheelMove() * gameCamera->zoomSpeed));
+    }
+}

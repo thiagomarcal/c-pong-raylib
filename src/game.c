@@ -21,27 +21,31 @@ void initWindow(int width, int height, char *title) {
 
 // public functions
 
-void InitGame(Game *game) {
-
-}
+void InitGame(Game *game) {}
 
 void UpdateGame(Game *game) {
 
-    Vector2 globalMousePosition = GetMousePosition();
+  Vector2 globalMousePosition = GetMousePosition();
 
-    bool isMouseOnSceneView = globalMousePosition.x >= 0 &&
-                              globalMousePosition.x <= game->sceneViewWidth - 40 &&
-                              globalMousePosition.y >= 0 &&
-                              globalMousePosition.y <= game->sceneViewHeight - 40;
+  bool isMouseOnSceneView =
+      globalMousePosition.x >= 0 &&
+      globalMousePosition.x <= game->sceneViewWidth - 40 &&
+      globalMousePosition.y >= 0 &&
+      globalMousePosition.y <= game->sceneViewHeight - 40;
 
-    if (isMouseOnSceneView) {
-        UpdateGameCamera(&game->gameCamera, game->playerPosition);
+  if (isMouseOnSceneView) {
+
+    if (IsKeyPressed(KEY_C)) {
+      game->explorationModeActive = !game->explorationModeActive;
     }
 
+    UpdateGameCamera(&game->gameCamera, game->explorationModeActive,
+                     game->playerPosition);
+  }
 }
 
 void RenderGame(Game *game) {
-    BeginTextureMode(game->target);
+    BeginTextureMode(game->sceneView);
 
         ClearBackground(RAYWHITE);
 
@@ -61,16 +65,18 @@ void RenderGame(Game *game) {
 
         ClearBackground(RAYWHITE);
 
-        GuiGroupBox((Rectangle){ 20, 20, game->sceneViewWidth-40, game->sceneViewHeight-40 }, "Scene View");
+        GuiGroupBox((Rectangle){ 20, 20, (float)game->sceneViewWidth-40, (float)game->sceneViewHeight-40 }, "Scene View");
 
-        Rectangle sourceRec = { 0, 0, (float)game->target.texture.width, -(float)game->target.texture.height };
-        Rectangle destRec = { 40, 40, (float)game->target.texture.width, (float)game->target.texture.height };
+        Rectangle sourceRec = { 0, 0, (float)game->sceneView.texture.width, -(float)game->sceneView.texture.height };
+        Rectangle destRec = { 40, 40, (float)game->sceneView.texture.width, (float)game->sceneView.texture.height };
         Vector2 origin = { 0, 0 };
-        DrawTexturePro(game->target.texture, sourceRec, destRec, origin, 0.0f, WHITE);
+        DrawTexturePro(game->sceneView.texture, sourceRec, destRec, origin, 0.0f, WHITE);
 
-        GuiGroupBox((Rectangle){ game->sceneViewWidth, 20, 700, game->sceneViewHeight-40 }, "Control View");
+        GuiGroupBox((Rectangle){ (float)game->sceneViewWidth, 20, 700, (float)game->sceneViewHeight-40 }, "Control View");
 
-        game->value = GuiSlider((Rectangle){ game->sceneViewWidth + 40, 40, 216, 16 }, TextFormat("%0.2f", game->value), NULL, game->value, 0.0f, 1.0f);
+        game->value = GuiSlider((Rectangle){ (float)game->sceneViewWidth + 40, 40, 216, 16 }, TextFormat("%0.2f", game->value), NULL, game->value, 0.0f, 1.0f);
+
+        game->explorationModeActive = GuiCheckBox((Rectangle){ (float)game->sceneViewWidth + 20, 120, 16, 16 }, "Exploration Mode", game->explorationModeActive);
 
         DrawFPS(40,40);
 
@@ -80,7 +86,7 @@ void RenderGame(Game *game) {
 }
 
 void ShutDown(Game *game) {
-    UnloadRenderTexture(game->target);
+    UnloadRenderTexture(game->sceneView);
 }
 
 bool IsRunning(Game *game) {
@@ -99,7 +105,7 @@ Game CreateGame(char *title) {
 
     GameCamera gameCamera = CreateGameCamera();
 
-    RenderTexture2D target = LoadRenderTexture(sceneViewWidth - 80, sceneViewHeight - 80);
+    RenderTexture2D sceneViewTexture = LoadRenderTexture(sceneViewWidth - 80, sceneViewHeight - 80);
 
     Game game = {
             .screenWidth = width,
@@ -108,7 +114,7 @@ Game CreateGame(char *title) {
             .fps = 60,
             .value = 0.5f,
             .gameCamera = gameCamera,
-            .target = target,
+            .sceneView = sceneViewTexture,
             .sceneViewWidth = sceneViewWidth,
             .sceneViewHeight = sceneViewHeight,
             .playerPosition = { 0.0f, 1.0f, 0.0f }

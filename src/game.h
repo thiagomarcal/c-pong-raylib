@@ -13,10 +13,11 @@ typedef struct Game {
     int fps;
     float value;
     GameCamera gameCamera;
-    RenderTexture2D target;
+    RenderTexture2D sceneView;
     int sceneViewWidth;
     int sceneViewHeight;
     Vector3 playerPosition;
+    bool explorationModeActive;
 
 } Game;
 

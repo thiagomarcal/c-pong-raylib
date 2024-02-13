@@ -20,9 +20,9 @@ typedef struct GameCamera {
 
 GameCamera CreateGameCamera();
 void InitGameCamera(GameCamera *camera);
-void UpdateGameCamera(GameCamera *camera, Vector3 playerPosition);
+void UpdateGameCamera(GameCamera *camera, bool explorationMode, Vector3 playerPosition);
 void RenderGameCamera(GameCamera *camera);
-void UpdatePlayerModeCamera(GameCamera *camera, Vector3 playerPosition, Vector2 mousePositionDelta);
-void UpdateExplorationModeCamera(GameCamera *camera, Vector2 mousePositionDelta);
+void UpdatePlayerModeCamera(GameCamera *gameCamera, Vector3 playerPosition, Vector2 mousePositionDelta);
+void UpdateExplorationModeCamera(GameCamera *gameCamera, Vector2 mousePositionDelta);
 
 #endif
