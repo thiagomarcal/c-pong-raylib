@@ -1,9 +1,8 @@
 #include <stddef.h>
-#import "game.h"
+#include "game.h"
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-
 
 // private functions
 void initWindow(int width, int height, char *title) {
@@ -20,8 +19,21 @@ void initWindow(int width, int height, char *title) {
 }
 
 // public functions
+void InitGame(Game *game) {
+ Entity player = {
+     .type = ENTITY_PLAYER,
+     .player = {.base = {.position = {0.0f, 0.3f, 2.0f},
+                         .model = LoadModel("resources/models/player.obj"),
+                         .direction = {0.0f, 0.0f, 0.0f},
+                         .velocity = {0.0f, 0.0f, 0.0f},
+                         .color = BLUE,
+                         .mass = 70.0f,
+                         .speed = 4.0f},
+                .health = 100}};
 
-void InitGame(Game *game) {}
+ game->entities[0] = player;
+
+}
 
 void UpdateGame(Game *game) {
 
@@ -117,11 +129,9 @@ Game CreateGame(char *title) {
             .sceneView = sceneViewTexture,
             .sceneViewWidth = sceneViewWidth,
             .sceneViewHeight = sceneViewHeight,
-            .playerPosition = { 0.0f, 1.0f, 0.0f }
+            .playerPosition = { 0.0f, 1.0f, 0.0f },
+            .gravity = -9.8f
     };
 
     return game;
 }
-
-
-

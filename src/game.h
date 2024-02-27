@@ -6,6 +6,9 @@
 #include "raygui.h"
 #include "camera.h"
 
+#include "entity.h"
+
+
 typedef struct Game {
     int screenWidth;
     int screenHeight;
@@ -18,7 +21,8 @@ typedef struct Game {
     int sceneViewHeight;
     Vector3 playerPosition;
     bool explorationModeActive;
-
+    Entity entities[10];
+    float gravity;
 } Game;
 
 Game CreateGame(char *title);
