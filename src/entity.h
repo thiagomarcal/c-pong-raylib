@@ -42,6 +42,7 @@ typedef struct {
     int health;
     PlayerState state;
     float initialJumpVelocity;
+    int jumps;
 } Player;
 
 typedef struct {

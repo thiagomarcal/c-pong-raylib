@@ -94,10 +94,13 @@ Vector3 calculatePlayerNetForce(Game *game, Player *player, float diagonalAngle,
 }
 
 void handlePlayerStateMachine(Game *game, Player *player) {
+    const int MAX_JUMPS = 2;
+
     switch (player->state) {
         case NORMAL:
             player->base.speed = 4.0f;
             player->initialJumpVelocity = 1.4f;
+            player->jumps = 0;
 
             if (IsKeyDown(KEY_SPACE)) {
                 player->state = JUMPING;
@@ -108,7 +111,8 @@ void handlePlayerStateMachine(Game *game, Player *player) {
             break;
         case SPRINTING:
 
-            player->base.speed = 8.0f;
+            // double the speed
+            player->base.speed *= 2.0f;
 
             if (IsKeyDown(KEY_SPACE)) {
                 player->state = JUMPING;
@@ -120,8 +124,12 @@ void handlePlayerStateMachine(Game *game, Player *player) {
 
             break;
         case JUMPING:
-            if (IsKeyDown(KEY_SPACE) && player->base.velocity.y < 0.0f) {
-                player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
+
+            if (player->jumps < MAX_JUMPS) {
+                if (IsKeyDown(KEY_SPACE) && player->base.velocity.y < 0.0f) {
+                    player->jumps++;
+                    player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
+                }
             }
 
             if (IsKeyPressed(KEY_SPACE) && player->base.position.y > 0.3f) {
@@ -134,8 +142,12 @@ void handlePlayerStateMachine(Game *game, Player *player) {
 
             break;
         case DOUBLE_JUMPING:
-            if (IsKeyDown(KEY_SPACE)) {
-                player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
+            if (player->jumps < MAX_JUMPS) {
+              if (IsKeyDown(KEY_SPACE)) {
+                player->jumps++;
+                player->base.velocity.y =
+                    player->initialJumpVelocity * (player->base.speed / 1.2f);
+              }
             }
 
             if (player->base.velocity.y < 0.0f) {
@@ -213,9 +225,9 @@ void updatePlayerMovement(Game *game, Player *player, float diagonalAngle) {
     // TODO: Implement collision detection
     //
 
+    // Restrict player's position to the ground
     if (player->base.position.y <= 0.3f) {
         player->base.position.y = 0.3f;
-        /* player->state = GROUNDED; */
     }
 
 }

@@ -30,7 +30,8 @@ void InitGame(Game *game) {
                          .color = BLUE,
                          .mass = 70.0f,
                          .speed = 4.0f},
-                .health = 100}};
+                .health = 100,
+                .jumps = 0}};
 
  game->entities[0] = player;
 
