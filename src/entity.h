@@ -28,7 +28,6 @@ typedef struct {
 
 typedef enum {
     NORMAL,
-    GROUNDED,
     JUMPING,
     DOUBLE_JUMPING,
     FALLING,
@@ -52,6 +51,7 @@ typedef struct {
 
 typedef struct {
     EntityType type;
+    bool isInitialized;
     union {
         Player player;
         Enemy enemy;
@@ -60,5 +60,6 @@ typedef struct {
 
 
 void UpdateEntity(Game *game, Entity *entity);
+void RenderEntity(Game *game, Entity *entity);
 
 #endif

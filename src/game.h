@@ -8,6 +8,7 @@
 
 #include "entity.h"
 
+#define MAX_ENTITIES 10
 
 typedef struct Game {
     int screenWidth;
@@ -21,7 +22,7 @@ typedef struct Game {
     int sceneViewHeight;
     Vector3 playerPosition;
     bool explorationModeActive;
-    Entity entities[10];
+    Entity entities[MAX_ENTITIES];
     float gravity;
 } Game;
 

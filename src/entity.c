@@ -1,5 +1,6 @@
 #include "entity.h"
 #include "raymath.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "game.h"
 
@@ -95,42 +96,61 @@ Vector3 calculatePlayerNetForce(Game *game, Player *player, float diagonalAngle,
 void handlePlayerStateMachine(Game *game, Player *player) {
     switch (player->state) {
         case NORMAL:
-            if (IsKeyDown(KEY_LEFT_SHIFT)) {
+            player->base.speed = 4.0f;
+            player->initialJumpVelocity = 1.4f;
+
+            if (IsKeyDown(KEY_SPACE)) {
+                player->state = JUMPING;
+            }
+            else if (IsKeyDown(KEY_LEFT_SHIFT)) {
                 player->state = SPRINTING;
             }
-
-            player->initialJumpVelocity = 2.0f;
-            player->base.speed = 4.0f;
-
             break;
         case SPRINTING:
+
+            player->base.speed = 8.0f;
+
+            if (IsKeyDown(KEY_SPACE)) {
+                player->state = JUMPING;
+            }
+
             if (IsKeyUp(KEY_LEFT_SHIFT)) {
                 player->state = NORMAL;
             }
 
-            player->initialJumpVelocity = 1.4f;
-            player->base.speed = 8.0f;
-
-            break;
-
-        case GROUNDED:
-            if (IsKeyDown(KEY_SPACE) && player->state == NORMAL) {
-                player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
-                player->state = JUMPING;
-            }
             break;
         case JUMPING:
-            if (IsKeyDown(KEY_SPACE) && player->state == JUMPING) {
+            if (IsKeyDown(KEY_SPACE) && player->base.velocity.y < 0.0f) {
                 player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
+            }
+
+            if (IsKeyPressed(KEY_SPACE) && player->base.position.y > 0.3f) {
                 player->state = DOUBLE_JUMPING;
-            } else {
+            }
+
+            if (player->base.velocity.y < 0.0f) {
                 player->state = FALLING;
             }
 
             break;
         case DOUBLE_JUMPING:
+            if (IsKeyDown(KEY_SPACE)) {
+                player->base.velocity.y = player->initialJumpVelocity * (player->base.speed / 1.2f);
+            }
+
+            if (player->base.velocity.y < 0.0f) {
+                player->state = FALLING;
+            }
             break;
         case FALLING:
+            if (IsKeyPressed(KEY_SPACE) && player->base.position.y > 0.3f) {
+                player->state = DOUBLE_JUMPING;
+            }
+
+            if (player->base.position.y <= 0.3f) {
+                player->base.position.y = 0.3f;
+                player->state = NORMAL;
+            }
             break;
         case ON_TOP:
             if (IsKeyDown(KEY_SPACE)) {
@@ -191,6 +211,12 @@ void updatePlayerMovement(Game *game, Player *player, float diagonalAngle) {
     handlePlayerPhysics(game, player, &netForce, damping, maxSpeed);
 
     // TODO: Implement collision detection
+    //
+
+    if (player->base.position.y <= 0.3f) {
+        player->base.position.y = 0.3f;
+        /* player->state = GROUNDED; */
+    }
 
 }
 
@@ -211,6 +237,20 @@ void UpdateEntity(Game *game, Entity *entity) {
             break;
         case ENTITY_ENEMY:
             // update enemy
+            break;
+    }
+}
+
+
+void RenderEntity(Game *game, Entity *entity) {
+    switch (entity->type) {
+        case ENTITY_PLAYER:
+            DrawModel(entity->player.base.model, entity->player.base.position, 0.3f, entity->player.base.color);
+            DrawModelWires(entity->player.base.model, entity->player.base.position, 0.3f, BLACK);
+            DrawBoundingBox(entity->player.base.box, GREEN);
+            break;
+        case ENTITY_ENEMY:
+            // render enemy
             break;
     }
 }

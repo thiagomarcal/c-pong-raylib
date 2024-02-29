@@ -21,6 +21,7 @@ void initWindow(int width, int height, char *title) {
 // public functions
 void InitGame(Game *game) {
  Entity player = {
+     .isInitialized = true,
      .type = ENTITY_PLAYER,
      .player = {.base = {.position = {0.0f, 0.3f, 2.0f},
                          .model = LoadModel("resources/models/player.obj"),
@@ -33,6 +34,16 @@ void InitGame(Game *game) {
 
  game->entities[0] = player;
 
+}
+
+void UpdateGameEntities(Game *game, bool explorationMode) {
+  if (!explorationMode) {
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+      if (game->entities[i].isInitialized) {
+        UpdateEntity(game, &game->entities[i]);
+      }
+    }
+  }
 }
 
 void UpdateGame(Game *game) {
@@ -51,8 +62,38 @@ void UpdateGame(Game *game) {
       game->explorationModeActive = !game->explorationModeActive;
     }
 
-    UpdateGameCamera(&game->gameCamera, game->explorationModeActive,
-                     game->playerPosition);
+    UpdateGameEntities(game, game->explorationModeActive);
+    UpdateGameCamera(&game->gameCamera, game->explorationModeActive, game->playerPosition);
+
+  }
+}
+
+void RenderGameEntities(Game *game) {
+  for (int i = 0; i < MAX_ENTITIES; i++) {
+    if (game->entities[i].isInitialized) {
+      RenderEntity(game, &game->entities[i]);
+    }
+  }
+}
+
+const char* getPlayerStateString(PlayerState state) {
+  switch (state) {
+    case NORMAL:
+      return "NORMAL";
+    case JUMPING:
+      return "JUMPING";
+    case DOUBLE_JUMPING:
+      return "DOUBLE_JUMPING";
+    case FALLING:
+      return "FALLING";
+    case ON_TOP:
+      return "ON_TOP";
+    case ROLLING:
+      return "ROLLING";
+    case SPRINTING:
+      return "SPRINTING";
+    case SHOOTING:
+      return "SHOOTING";
   }
 }
 
@@ -62,10 +103,7 @@ void RenderGame(Game *game) {
         ClearBackground(RAYWHITE);
 
         BeginMode3D(game->gameCamera.camera);
-
-            DrawCube(game->playerPosition, 2.0f, 2.0f, 2.0f, RED);
-            DrawCubeWires(game->playerPosition, 2.0f, 2.0f, 2.0f, MAROON);
-
+            RenderGameEntities(game);
             DrawGrid(100, 1.0f);
 
         EndMode3D();
@@ -89,6 +127,9 @@ void RenderGame(Game *game) {
         game->value = GuiSlider((Rectangle){ (float)game->sceneViewWidth + 40, 40, 216, 16 }, TextFormat("%0.2f", game->value), NULL, game->value, 0.0f, 1.0f);
 
         game->explorationModeActive = GuiCheckBox((Rectangle){ (float)game->sceneViewWidth + 20, 120, 16, 16 }, "Exploration Mode", game->explorationModeActive);
+
+        // TODO: fix later, just a way to see the player state
+        GuiLabel((Rectangle){ (float)game->sceneViewWidth + 20, 160, 200, 20 }, TextFormat("Player State: %s", getPlayerStateString(game->entities[0].player.state)));
 
         DrawFPS(40,40);
 
